@@ -41,8 +41,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.button_divide).setOnClickListener(textAppendListener);
         findViewById(R.id.button_open_paren).setOnClickListener(textAppendListener);
         findViewById(R.id.button_close_paren).setOnClickListener(textAppendListener);
-        findViewById(R.id.button_power).setOnClickListener(textAppendListener);
-
         findViewById(R.id.button_clear).setOnClickListener(v -> {
             String currentText = resultTextView.getText().toString();
             if (!currentText.isEmpty()) {
@@ -50,10 +48,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.button_clear).setOnLongClickListener(v -> {
+        findViewById(R.id.button_all_clear).setOnClickListener(v -> {
             resultTextView.setText("");
             expressionTextView.setText("");
-            return true;
         });
 
         findViewById(R.id.button_equals).setOnClickListener(v -> {
@@ -76,25 +73,26 @@ public class MainActivity extends AppCompatActivity {
 
     private double evaluateExpression(String expression) {
         return new Object() {
-            int pos = -1, ch;
-
-            void nextChar() {
-                ch = (++pos < expression.length()) ? expression.charAt(pos) : -1;
+            int position = -1, character;
+            void nextCharacter() {
+                character = (++position < expression.length()) ? expression.charAt(position) : -1;
             }
 
-            boolean eat(int charToEat) {
-                while (ch == ' ') nextChar();
-                if (ch == charToEat) {
-                    nextChar();
+            boolean eat(int characterToEat) {
+                while (character == ' ') nextCharacter();
+                if (character == characterToEat) {
+                    nextCharacter();
                     return true;
                 }
                 return false;
             }
 
             double parse() {
-                nextChar();
+                nextCharacter();
                 double x = parseExpression();
-                if (pos < expression.length()) throw new RuntimeException("Unexpected: " + (char)ch);
+                if (position < expression.length()) {
+                    throw new RuntimeException("Unexpected: " + (char)character);
+                };
                 return x;
             }
 
@@ -108,18 +106,10 @@ public class MainActivity extends AppCompatActivity {
             }
 
             double parseTerm() {
-                double x = parseFactor();
-                for (;;) {
-                    if (eat('*')) x *= parseFactor();
-                    else if (eat('/')) x /= parseFactor();
-                    else return x;
-                }
-            }
-
-            double parseFactor() {
                 double x = parsePrimary();
                 for (;;) {
-                    if (eat('^')) x = Math.pow(x, parseFactor());
+                    if (eat('*')) x *= parsePrimary();
+                    else if (eat('/')) x /= parsePrimary();
                     else return x;
                 }
             }
@@ -128,15 +118,15 @@ public class MainActivity extends AppCompatActivity {
                 if (eat('+')) return parsePrimary();
                 if (eat('-')) return -parsePrimary();
                 double x;
-                int startPos = this.pos;
+                int startPosition = this.position;
                 if (eat('(')) {
                     x = parseExpression();
                     eat(')');
-                } else if ((ch >= '0' && ch <= '9') || ch == '.') {
-                    while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
-                    x = Double.parseDouble(expression.substring(startPos, this.pos));
+                } else if ((character >= '0' && character <= '9') || character == '.') {
+                    while ((character >= '0' && character <= '9') || character == '.') nextCharacter();
+                    x = Double.parseDouble(expression.substring(startPosition, this.position));
                 } else {
-                    throw new RuntimeException("Unexpected: " + (char)ch);
+                    throw new RuntimeException("Unexpected: " + (char)character);
                 }
                 return x;
             }
